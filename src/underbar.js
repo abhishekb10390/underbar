@@ -321,7 +321,8 @@
     var result = {};
 
     return function() {
-      var stringArg = JSON.stringify(arguments);
+      var args = Array.prototype.slice.call(arguments,1);
+      var stringArg = JSON.stringify(args);
       if (result[stringArg] !== undefined) {
         return result[stringArg];
       } else {
