@@ -182,7 +182,7 @@
       if (accumulator === undefined) {
         var accumulator = collection[keys[0]];
         _.each(keys.slice(1, keys.length), function(key){
-          accumulator = iterator(accumulator, collection[key])
+          accumulator = iterator(accumulator, collection[key]);
         });
         return accumulator;
       } else {
@@ -196,16 +196,16 @@
   };
 
   // Determine if the array or object contains a given value (using `===`).
-  _.contains = function(collection, target) {
-    // TIP: Many iteration problems can be most easily expressed in
-    // terms of reduce(). Here's a freebie to demonstrate!
-    return _.reduce(collection, function(wasFound, item) {
-      if (wasFound) {
-        return true;
-      }
-      return item === target;
-    }, false);
-  };
+    _.contains = function(collection, target) {
+      // TIP: Many iteration problems can be most easily expressed in
+      // terms of reduce(). Here's a freebie to demonstrate!
+      return _.reduce(collection, function(wasFound, item) {
+        if (wasFound) {
+          return true;
+        }
+        return item === target;
+      }, false);
+    };
 
 
   // Determine whether all of the elements match a truth test.
@@ -384,6 +384,13 @@
   // Calls the method named by functionOrKey on each value in the list.
   // Note: You will need to learn a bit about .apply to complete this.
   _.invoke = function(collection, functionOrKey, args) {
+    return _.map(collection, function(ele){
+      if (typeof(functionOrKey) === 'string') {
+          return ele[functionOrKey].apply(ele, args);
+      } else {
+          return functionOrKey.apply(ele, args);
+        }
+    });
   };
 
   // Sort the object's values by a criterion produced by an iterator.
@@ -391,6 +398,25 @@
   // of that string. For example, _.sortBy(people, 'name') should sort
   // an array of people by their name.
   _.sortBy = function(collection, iterator) {
+    return collection.sort(function(a,b){
+      if (typeof(iterator) === 'string') {
+        if (a[iterator] < b[iterator]) {
+          return -1;
+        } else if (a[iterator] > b[iterator]) {
+          return 1;
+        } else {
+          return 0;
+        }
+      } else { 
+        if (iterator(a) > iterator(b)) {
+          return 1;
+        } else  if (iterator(a) < iterator(b)) {
+          return -1;
+        } else {
+          return 0;
+        }
+      }
+    });
   };
 
   // Zip together two or more arrays with elements of the same index
@@ -399,6 +425,17 @@
   // Example:
   // _.zip(['a','b','c','d'], [1,2,3]) returns [['a',1], ['b',2], ['c',3], ['d',undefined]]
   _.zip = function() {
+    var output = [];
+      for (var i = 0; i < arguments[0].length; i++) {
+        var k = 0;
+        var innerArray = [];
+        while (k < arguments.length) {
+        innerArray.push(arguments[k][i]);
+        k++;
+        }
+        output.push(innerArray);
+      }
+      return output;
   };
 
   // Takes a multidimensional array and converts it to a one-dimensional array.
@@ -406,16 +443,47 @@
   //
   // Hint: Use Array.isArray to check if something is an array
   _.flatten = function(nestedArray, result) {
+    var output = [];
+    var recurse = function(arr) {
+      _.each(arr, function(element){
+        if (Array.isArray(element) === true) {
+          recurse(element);   
+        } else {
+          output.push(element);
+        }  
+      });
+  }
+  recurse(nestedArray);
+  return output;
   };
 
   // Takes an arbitrary number of arrays and produces an array that contains
   // every item shared between all the passed-in arrays.
   _.intersection = function() {
+    var output = [];
+    var commonEle = new Set();
+    _.each(arguments[0], function(ele){
+      commonEle.add(ele);
+    });
+    var args = Array.prototype.slice.call(arguments, 1);
+    _.each(arguments[0], function(num){
+      _.each(args, function(array){
+        if (_.contains(array, num) === false) {
+          commonEle.delete(num);
+        }
+      });
+    });
+    return [...commonEle];
   };
 
   // Take the difference between one array and a number of other arrays.
   // Only the elements present in just the first array will remain.
   _.difference = function(array) {
+    var otherArgs = Array.prototype.slice.call(arguments, 1);
+    var otherArrays = _.flatten(otherArgs);
+    return _.filter(array, function(ele){
+      return !_.contains(otherArrays, ele);
+    });
   };
 
   // Returns a function, that, when invoked, will only be triggered at most once
@@ -424,5 +492,17 @@
   //
   // Note: This is difficult! It may take a while to implement.
   _.throttle = function(func, wait) {
+    var timePassedOrNot = true;
+    var args = Array.prototype.slice.call(arguments,2);
+    return function() {
+      if (timePassedOrNot) {
+        timePassedOrNot = false;
+        func.apply(this, args);
+
+        setTimeout(function(){
+          timePassedOrNot = true;
+        }, wait);
+      }
+    };
   };
 }());
